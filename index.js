@@ -10,7 +10,7 @@ app.use(express.json());
 
 
 //mongodb
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:O5FvXo4DGW2JYASI@cluster0.xlrthmr.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -34,14 +34,33 @@ async function run() {
         res.send(result);
     })
     app.get('/toys', async (req,res)=>{
+         const query=req.query;
+         if(!query){
          const result = await toysCollection.find().toArray();
          res.send(result)
+         return;
+         }
+         const result = await toysCollection.find(query).toArray();
+         res.send(result)    
     })
-    app.get('/toy/user', async(req,res)=>{
+    app.get('/toys/user', async(req,res)=>{
           const query =req.query
           const result=await toysCollection.find(query).toArray()
           res.send(result)
           console.log(query);
+    })
+    app.patch('/toys/:id',async(req,res)=>{
+      const id =req.params.id;
+      const filter ={_id : new ObjectId(id)};
+      const toy=req.body;
+      const updatedtoy={
+        $set:{price:toy.price,
+             quantity:toy.quantity,
+             description:toy.description
+             }
+      }
+      const result=await toysCollection.updateOne(filter,updatedtoy)
+      res.send(result);
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
